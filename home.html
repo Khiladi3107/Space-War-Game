@@ -157,7 +157,7 @@
   <div class="container" id="menu">
     <h1>🚀 Space War<h4>The Ultimate Action Battle</h4></h1>
 
-    <button onclick="startGame()">Start Battle</button>
+    <button onclick="startGame()" id="startBtn">Start Battle</button>
     <button onclick="toggleModal('levels')">Select Difficulty</button>
     <button onclick="toggleModal('info')">How to Play</button>
     <button onclick="toggleModal('settings')">Settings</button>
@@ -213,6 +213,12 @@
 
       // Stop the background music
       document.getElementById('menuMusic').pause();
+
+      // start the game here too
+      document.getElementById('startBtn').addEventListener('click', () => {
+      yourAudioElement.play();
+      });
+
     }
 
 //=======================================exit game btn / close tab btn ===============================//
