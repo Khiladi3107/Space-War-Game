@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #222;
+      font-family: Arial;
+      color: white;
+    }
+
+    #gameCanvas {
+      background: #000000;
+      display: block;
+      box-shadow: 0 0 10px #0ff;
+      touch-action: none;
+    }
+
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 16px;
+      z-index: 10;
+    }
+
+    #highScore {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 16px;
+      z-index: 10;
+    }
+
+    .touch-controls {
+      position: absolute;
+      bottom: 80px;
+      left: 20px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn {
+      width: 50px;
+      height: 50px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      text-align: center;
+      line-height: 50px;
+      font-size: 20px;
+      color: white;
+      user-select: none;
+    }
+
+    #shootTip {
+      position: absolute;
+      bottom: 60px;
+      right: 10px;
+      font-size: 12px;
+      color: #aaa;
+      z-index: 10;
+    }
+
+    #inventory {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px;
+      z-index: 10;
+    }
+
+    .health-bar {
+      position: absolute;
+      top: 40px;
+      left: 10px;
+      width: 200px;
+      height: 15px;
+      background: red;
+      border: 2px solid white;
+      z-index: 10;
+    }
+
+    .health-fill {
+      height: 100%;
+      background: lime;
+    }
+
+      .pauseBtn{
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      padding: 8px 8px;
+      font-size: 10px;
+      background-color: rgb(41, 40, 40);
+      color: #00ffff;
+      border: 1px solid #00ffff;
+      border-radius: 6px;
+      cursor: pointer;
+      }
+
+      .pauseBtn:hover{
+         box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+      }
+  </style>
+</head>
+<body>
+  <button class="pauseBtn" id="pauseBtn">Pause</button>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="info">Health: <span id="health">100</span> | Score: <span id="score">0</span></div>
+  <div id="highScore">High Score: <span id="high">0</span></div>
+
+  <div class="health-bar"><div class="health-fill" id="healthBarFill" style="width: 100%;"></div></div>
+
+  <div class="touch-controls">
+    <div class="row"><div class="btn" id="btn-up">▲</div></div>
+    <div class="row">
+      <div class="btn" id="btn-left">◀</div>
+      <div class="btn" id="btn-down">▼</div>
+      <div class="btn" id="btn-right">▶</div>
+    </div>
+  </div>
+
+  <div id="shootTip">Tap canvas to shoot</div>
+
+  <div id="inventory">
+    <div class="slot" id="slot0">Empty🧰</div>
+  </div>
+
+  <audio id="shootSound" src="shoot.mp3"></audio>
+  <audio id="hitSound" src="hit.mp3"></audio>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const backgroundImg = new Image();
+    backgroundImg.src = 'images/level8.jpg';
+    const playerImg = new Image(); 
+    playerImg.src = 'player1.png';
+    const enemyImg = new Image(); 
+    enemyImg.src = 'enemy1.png';
+    const healthKitImg = new Image();
+    healthKitImg.src = 'health-kit.png';
+
+    let player = { x: 100, y: 100, size: 50, speed: 5, health: 100 };
+    let bullets = [];
+    let enemies = [];
+    let powerUps = [];
+    let score = 0;
+    let highScore = localStorage.getItem('highScore') || 0;
+
+    document.getElementById('high').textContent = highScore;
+
+    const keys = {};
+    const shootSound = document.getElementById('shootSound');
+    const hitSound = document.getElementById('hitSound');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      player.x = canvas.width / 2;
+      player.y = canvas.height / 2;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+    document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+    const moveMap = {
+      'btn-up': 'w', 'btn-down': 's', 'btn-left': 'a', 'btn-right': 'd'
+    };
+    Object.keys(moveMap).forEach(id => {
+      const key = moveMap[id];
+      const btn = document.getElementById(id);
+      btn.addEventListener('touchstart', () => keys[key] = true);
+      btn.addEventListener('touchend', () => keys[key] = false);
+    });
+
+    function getTouchPosition(touch) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+    }
+
+    canvas.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const pos = getTouchPosition(e.touches[0]);
+      shoot(pos.x, pos.y);
+    }, { passive: false });
+
+    canvas.addEventListener('click', e => {
+      shoot(e.offsetX, e.offsetY);
+    });
+
+    function shoot(x, y) {
+      const angle = Math.atan2(y - player.y, x - player.x);
+      bullets.push({
+        x: player.x,
+        y: player.y,
+        dx: Math.cos(angle) * 6,
+        dy: Math.sin(angle) * 6
+      });
+      shootSound.play();
+    }
+
+    // Inventory
+    let inventory = [null];
+    
+
+    function updateInventoryUI() {
+      for (let i = 0; i < 5; i++) {
+        const slot = document.getElementById('slot' + i);
+        slot.textContent = inventory[i] || 'Empty';
+      }
+    }
+
+    function addItemToInventory(itemName) {
+  // Check if item already exists
+  const existingIndex = inventory.findIndex(slot => slot && slot.name === itemName);
+
+  if (existingIndex !== -1) {
+    // Increase count if found
+    inventory[existingIndex].count++;
+  } else {
+    // Else put it in an empty slot
+    const emptyIndex = inventory.findIndex(slot => slot === null);
+    if (emptyIndex !== -1) {
+      inventory[emptyIndex] = { name: itemName, count: 1 };
+    }
+  }
+
+  updateInventoryUI();
+}
+
+function updateInventoryUI() {
+  for (let i = 0; i < 1; i++) {
+    const slot = document.getElementById('slot' + i);
+    if (inventory[i]) {
+      slot.textContent = `${inventory[i].name} x${inventory[i].count}`;
+    } else {
+      // slot.textContent = 'Empty';
+    }
+  }
+}
+
+
+
+for (let i = 0; i < 1; i++) {
+  document.getElementById('slot' + i).addEventListener('click', () => {
+    const item = inventory[i];
+    if (!item) return;
+
+    if (item.name === 'Health Kit') {
+      player.health = Math.min(100, player.health + 30);
+    }
+
+    if (item.name === 'Shield') {
+      player.shield = true;
+    }
+
+    // Decrease count
+    item.count--;
+
+    if (item.count <= 0) {
+      inventory[i] = null;
+    }
+
+    updateInventoryUI();
+  });
+}
+
+    function update() {
+      if (keys['w']) player.y -= player.speed;
+      if (keys['s']) player.y += player.speed;
+      if (keys['a']) player.x -= player.speed;
+      if (keys['d']) player.x += player.speed;
+
+      player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
+      player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+
+      bullets.forEach(b => {
+        b.x += b.dx;
+        b.y += b.dy;
+      });
+      bullets = bullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
+
+      if (Math.random() < 0.02) {
+        const side = Math.random() < 0.5 ? 0 : canvas.width;
+        enemies.push({
+          x: side,
+          y: Math.random() * canvas.height,
+          size: 20,
+          speed: 1 + Math.random()
+        });
+      }
+
+      enemies.forEach(e => {
+        const angle = Math.atan2(player.y - e.y, player.x - e.x);
+        e.x += Math.cos(angle) * e.speed;
+        e.y += Math.sin(angle) * e.speed;
+      });
+
+      bullets.forEach((b, bi) => {
+        enemies.forEach((e, ei) => {
+          if (Math.hypot(b.x - e.x, b.y - e.y) < e.size) {
+            bullets.splice(bi, 1);
+            enemies.splice(ei, 1);
+            hitSound.play();
+            score += 10;
+          }
+        });
+      });
+
+      enemies.forEach((e, ei) => {
+        if (Math.hypot(player.x - e.x, player.y - e.y) < e.size) {
+          player.health -= 5;
+          enemies.splice(ei, 1);
+        }
+      });
+
+      if (Math.random() < 0.005) {
+        powerUps.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: 15
+        });
+      }
+
+      powerUps.forEach((p, i) => {
+        if (Math.hypot(player.x - p.x, player.y - p.y) < player.size + p.size) {
+          player.health = Math.min(100, player.health + 20);
+          if (Math.random() < 0.5) addItemToInventory('Health Kit');
+          powerUps.splice(i, 1);
+        }
+      });
+
+      document.getElementById('health').textContent = player.health;
+      document.getElementById('score').textContent = score;
+      document.getElementById('healthBarFill').style.width = player.health + '%';
+    }
+
+    function draw() {
+  // 🖼️ Draw the background image first
+  ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+
+  powerUps.forEach(p => {
+  ctx.drawImage(healthKitImg, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
+});
+
+
+  ctx.drawImage(playerImg, player.x - player.size, player.y - player.size, player.size * 2, player.size * 2);
+
+  ctx.fillStyle = 'yellow';
+  bullets.forEach(b => {
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  enemies.forEach(e => {
+    ctx.drawImage(enemyImg, e.x - e.size, e.y - e.size, e.size * 2, e.size * 2);
+  });
+}
+
+    function loop() {
+    if (player.health <= 0) {
+      ctx.fillStyle = 'white';
+      ctx.font = '40px Arial';
+      ctx.fillText('Game Over!', canvas.width / 2 - 100, canvas.height / 2);
+      ctx.font = '20px Arial';
+      ctx.fillText('Refresh to restart', canvas.width / 2 - 80, canvas.height / 2 + 30);
+  
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('highScore', highScore);
+        document.getElementById('high').textContent = highScore;
+      }
+      return; // stop the loop
+    }
+  
+    if (!isPaused) {
+      update();
+      draw();
+    }
+  
+    requestAnimationFrame(loop); // loop continues, but skips logic if paused
+  }
+  
+
+    let loadedImages = 0;
+    const totalImages = 4;
+    function checkAllLoaded() {
+      loadedImages++;
+      if (loadedImages === totalImages) {
+        resizeCanvas();
+        loop();
+      }
+    }
+
+    playerImg.onload = checkAllLoaded;
+    enemyImg.onload = checkAllLoaded;
+    backgroundImg.onload = checkAllLoaded;
+    healthKitImg.onload = checkAllLoaded;
+
+
+    // pause btn code 
+    let isPaused = false; // Controls pause state  
+    const pauseBtn = document.getElementById('pauseBtn');
+    pauseBtn.addEventListener('click', () => {
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+    });
+
+
+  </script>
+</body>
+</html>

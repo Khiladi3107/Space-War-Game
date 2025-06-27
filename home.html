@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🌌 Space War - Command Center</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: url('spacewar.avif') no-repeat center center fixed;
+      background-size: cover;
+      color: #00ffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    
+    .container {
+      text-align: center;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px #00ffff88;
+      width: 90%;
+      max-width: 450px;
+      z-index: 10;
+      position: relative;
+    }
+
+    h1 {
+      font-size: 50px;
+      margin-bottom: 30px;
+      text-shadow: 0 0 8px #00ffff;
+      color: #00ffff;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin: 12px 0;
+      font-size: 18px;
+      background-color: transparent;
+      border: 2px solid #00ffff;
+      color: #00ffff;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+    }
+
+    button:hover {
+      background-color: #00ffff;
+      color: black;
+      box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+    }
+
+    .modal {
+      margin-top: 20px;
+      background-color: rgba(0, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      display: none;
+      color: #fff;
+    }
+
+    .level-options button {
+      background-color: rgba(0, 255, 255, 0.1);
+      border: 1px solid #00ffff;
+      margin: 5px;
+    }
+
+    .level-options button:hover {
+      background-color: #00ffff;
+      color: black;
+    }
+
+    iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      border: none;
+      width: 100vw;
+      height: 100vh;
+      z-index: 100;
+      display: none;
+    }
+
+    /* =================================================================================== */
+    #exitBtn{
+      position: absolute;
+      bottom: 530px;
+      right: 65px;
+      width: 40px;
+      padding: 9px 2px;
+      font-size: 9px;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      z-index: 101;
+      display: none;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    #closeTabBtn {
+      position: fixed;
+      top: 15px;
+      right: 10px;
+      width: 40px;
+      padding: 8px 2px;
+      font-size: 9px;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      z-index: 101;
+      display: none;
+      font-family: 'Orbitron', sans-serif;
+    }
+    /* =================================================================================== */
+
+    #exitBtn {
+      background-color: rgb(41, 40, 40);
+      color: #00ffff;
+      border: 1px solid #00ffff;
+      /* right: 130px; */
+    }
+
+    #closeTabBtn {
+      background-color: rgb(43, 43, 43);
+      color: #00ffff;
+      border: 1px solid #00ffff;
+    }
+
+    /* Optional: Twinkling stars background effect */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      /* background: url('https://i.ibb.co/z5F5YLF/star-bg.gif') repeat; */
+      opacity: 0.08;
+      z-index: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Menu -->
+  <div class="container" id="menu">
+    <h1>🚀 Space War<h4>The Ultimate Action Battle</h4></h1>
+
+    <button onclick="startGame()">Start Battle</button>
+    <button onclick="toggleModal('levels')">Select Difficulty</button>
+    <button onclick="toggleModal('info')">How to Play</button>
+    <button onclick="toggleModal('settings')">Settings</button>
+
+    <!-- LEVEL SELECT -->
+    <div class="modal" id="levels">
+      <p><strong>Select Your Challenge:</strong></p>
+      <div class="level-options">
+        <button onclick="selectLevel('Easy')">Easy</button>
+        <button onclick="selectLevel('Medium')">Medium</button>
+        <button onclick="selectLevel('Hard')">Hard</button>
+      </div>
+    </div>
+
+    <!-- HOW TO PLAY -->
+    <div class="modal" id="info">
+      <p><strong>How to Play:</strong></p>
+      <p>Control your spaceship using arrow keys or WASD. Press Mouse to shoot. Destroy enemies and dodge asteroids!</p>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="modal" id="settings">
+      <p><strong>Settings:</strong></p>
+      <label>
+        <input type="checkbox" id="musicToggle" checked>
+        Background Music
+      </label>
+      <audio id="menuMusic" src="background.mp3" autoplay loop></audio>
+    </div>
+  </div>
+
+  <!-- Game Loader -->
+  <iframe id="gameFrame" src=""></iframe>
+
+  <!-- Exit Game Button -->
+  <button id="exitBtn" onclick="exitGame()">Exit Game</button>
+
+  <!-- Close Tab Button -->
+  <button id="closeTabBtn" onclick="closeTab()">Close Tab</button>
+
+  <script>
+//=======================================start game/ music pause=======================================//
+    function startGame() {
+      document.getElementById('menu').style.display = 'none';
+      const gameFrame = document.getElementById('gameFrame');
+      gameFrame.src = "game.html";
+      // gameFrame.src = "level-select.html";
+      gameFrame.style.display = 'block';
+
+      // Show control buttons
+      document.getElementById('exitBtn').style.display = 'block';
+      document.getElementById('closeTabBtn').style.display = 'block';
+
+      // Stop the background music
+      document.getElementById('menuMusic').pause();
+    }
+
+//=======================================exit game btn / close tab btn ===============================//
+    function exitGame() {
+      const gameFrame = document.getElementById('gameFrame');
+      gameFrame.src = "";
+      gameFrame.style.display = 'none';
+
+      document.getElementById('exitBtn').style.display = 'none';
+      document.getElementById('closeTabBtn').style.display = 'none';
+
+      document.getElementById('menu').style.display = 'block';
+    }
+
+    function closeTab() {
+      window.open('', '_self');
+      window.close();
+      alert("Your browser blocked auto-close. Please close the tab manually.");
+    }
+
+    // Resume music
+      if (document.getElementById('musicToggle').checked) {
+        document.getElementById('menuMusic').play();
+      }
+//=========================================level selection====================================================//
+    function selectLevel(level) {
+      alert(`🚨 Difficulty set to: ${level}`);
+    }
+
+    function toggleModal(id) {
+      const modals = document.querySelectorAll('.modal');
+      modals.forEach(m => {
+        if (m.id !== id) m.style.display = 'none';
+      });
+
+      const modal = document.getElementById(id);
+      modal.style.display = (modal.style.display === 'block') ? 'none' : 'block';
+    }
+
+//=======================================backgruond music=======================================//
+     const musicToggle = document.getElementById('musicToggle');
+      const menuMusic = document.getElementById('menuMusic');
+
+      musicToggle.addEventListener('change', () => {
+        if (musicToggle.checked) {
+          menuMusic.play();
+        } else {
+          menuMusic.pause();
+        }
+      });
+
+</script>
+</body>
+</html>
