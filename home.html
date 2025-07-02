@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>🌌 Space War - Command Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * {
       box-sizing: border-box;
@@ -11,7 +12,7 @@
     body {
       margin: 0;
       font-family: 'Orbitron', sans-serif;
-      background: url('spacewar.avif') no-repeat center center fixed;
+      background: url('chatgpt image.png') no-repeat center center fixed;
       background-size: cover;
       color: #00ffff;
       display: flex;
@@ -21,7 +22,6 @@
       overflow: hidden;
       position: relative;
     }
-    
     
     .container {
       text-align: center;
@@ -36,7 +36,7 @@
     }
 
     h1 {
-      font-size: 50px;
+      font-size: 45px;
       margin-bottom: 30px;
       text-shadow: 0 0 8px #00ffff;
       color: #00ffff;
@@ -131,6 +131,7 @@
       color: #00ffff;
       border: 1px solid #00ffff;
       /* right: 130px; */
+      /* bottom: 600px; */
     }
 
     #closeTabBtn {
@@ -149,6 +150,68 @@
       z-index: 0;
       pointer-events: none;
     }
+/* ========================================================================================================= */
+/* @media (max-width: 768px) {
+  body {
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 30px;
+    overflow-y: auto;
+  }
+
+  .container {
+    width: 95%;
+    max-width: 100%;
+    padding: 20px 15px;
+    margin-top: 30px;
+    box-shadow: none;
+    border-radius: 10px;
+  }
+
+  h1 {
+    font-size: 30px;
+    margin-bottom: 15px;
+  }
+
+  h1 h4 {
+    font-size: 14px;
+  }
+
+  button {
+    font-size: 14px;
+    padding: 12px;
+    margin: 10px 0;
+  }
+
+  .modal {
+    font-size: 14px;
+  }
+
+  .level-options button {
+    font-size: 13px;
+    padding: 10px;
+    width: 100px;
+  }
+
+  #closeTabBtn {
+    width: 50px;
+    font-size: 10px;
+    bottom: 10px;
+    right: 10px;
+    height: 50px;
+  }
+
+  #exitBtn{
+    width: 50px;
+    font-size: 10px;
+    bottom: 235px;
+    right: 20px;
+    bottom: 580px;
+  }
+
+} */
+
+
   </style>
 </head>
 <body>
@@ -172,12 +235,15 @@
       </div>
     </div>
 
-    <!-- HOW TO PLAY -->
+   <!-- HOW TO PLAY -->
     <div class="modal" id="info">
       <p><strong>How to Play:</strong></p>
-      <p>Control your spaceship using arrow keys or WASD. Press Mouse to shoot. Destroy enemies and dodge asteroids!</p>
+      <p>🕹️ Use <strong>WASD</strong> or <strong>Arrow keys</strong> to move your spaceship.</p>
+      <p>🖱️ Tap or click the screen to shoot lasers.</p>
+      <p>💥 Destroy enemies, collect power-ups, and avoid collisions.</p>
+      <p>❤️ <strong>Press "H"</strong> on your keyboard to use a <strong>Health Kit</strong> if you’ve collected one!</p>
     </div>
-
+    
     <!-- SETTINGS -->
     <div class="modal" id="settings">
       <p><strong>Settings:</strong></p>
