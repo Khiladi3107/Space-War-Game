@@ -104,7 +104,7 @@
     .level-options {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      /* gap: 5px; */
     }
 
     .level-options button {
@@ -136,7 +136,7 @@
 
     #exitBtn {
       position: absolute;
-      bottom: 530px;
+      bottom: 595px;
       right: 65px;
       width: 40px;
       padding: 9px 2px;
@@ -179,6 +179,40 @@
       pointer-events: none;
     }
 
+    /* close modal  */
+  /* .modal .close-btn {
+    position: absolute;
+    top: 8px;
+    left: 160px;
+    background: transparent;
+    border: none;
+    color: #00ffff;
+    font-size: 17px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    z-index: 25;
+  }
+  .modal .close-btn:hover {
+    color: white;
+  }  */
+
+   button.modal.close-btn {
+      display: block;
+      /* width: 10%; */
+      padding: 15px;
+      margin-left: 10px;
+      font-size: 18px;
+      background-color: transparent;
+      border: 2px solid #00ffff;
+      color: #00ffff;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+    } 
+
+
+
   </style>
 </head>
 <body>
@@ -198,6 +232,7 @@
 
   <!-- LEVEL SELECT -->
   <div class="modal" id="levels">
+  <button class="close-btn" onclick="closeModals()">❌</button>
     <p><strong>Select Your Challenge:</strong></p>
     <div class="level-options">
       <button onclick="selectLevel('Easy')">Easy</button>
@@ -208,15 +243,21 @@
 
   <!-- HOW TO PLAY -->
   <div class="modal" id="info">
+  <button class="close-btn" onclick="closeModals()">❌</button>
     <p><strong>How to Play:</strong></p>
-    <p>🕹️ Use <strong>WASD</strong> or <strong>Arrow keys</strong> to move your spaceship.</p>
-    <p>🖱️ Tap or click the screen to shoot lasers.</p>
-    <p>💥 Destroy enemies, collect power-ups, and avoid collisions.</p>
-    <p>❤️ <strong>Press "H"</strong> on your keyboard to use a <strong>Health Kit</strong> if you’ve collected one!</p>
+    <p>🕹️ Use <strong>WASD</strong> or <strong>Arrow keys</strong> to move your spaceship around the screen.</p>
+    <p>🖱️ Tap or click anywhere on the screen to shoot lasers at enemies.</p>
+    <p>💥 Your goal: Destroy incoming enemies, collect power-ups, and stay alive!</p>
+    <p>❤️ <strong>Press "H"</strong> to use a <strong>Health Kit</strong> (if available). It restores some of your health.</p>
+    <p>🛡️ <strong>Press "J"</strong> to activate a <strong>Shield</strong>. It protects you from damage for 5 seconds, but has a cooldown period of 10 seconds.</p>
+    <p>⚡ <strong>Press "K"</strong> to use a <strong>Speed Boost</strong>. It temporarily increases your movement speed to help dodge enemies faster.</p>
+    <p>📦 You can also tap the inventory slots at the bottom to use power-ups on touch devices.</p>
+    <p>🚀 Survive as long as you can and aim for the highest score!</p>
   </div>
 
   <!-- SETTINGS -->
   <div class="modal" id="settings">
+  <button class="close-btn" onclick="closeModals()">❌</button>
     <p><strong>Settings:</strong></p>
     <label>
       <input type="checkbox" id="musicToggle" checked>
@@ -297,6 +338,17 @@
         menuMusic.pause();
       }
     });
+
+    //close modal 
+  // function closeModals() {
+  //   clearTimeout(autoCloseTimeout); // Clear auto-close if running
+  //   document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+  //   document.getElementById('modalOverlay').style.display = 'none';
+  // }
+
   </script>
+    <footer style="position: absolute; bottom: 100px; width: 100%; text-align: center; font-size: 15px; color: rgb(245, 245, 250);">
+      © 2025 Gunjan Kelshikar. All rights reserved.
+    </footer>
 </body>
 </html>
