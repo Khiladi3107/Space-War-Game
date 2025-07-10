@@ -1,3 +1,6 @@
+<!-- © 2025 Gunjan Sunil Kelshikar.
+All rights reserved.This game and its source code are protected by copyright law.
+Unauthorized copying, distribution, or use is strictly prohibited.-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,10 +9,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
       overflow: hidden;
       background: #222;
       font-family: Arial;
@@ -23,15 +24,18 @@
       touch-action: none;
     }
 
-    #info, #highScore {
+    #info, #highScore, #timer {
       position: absolute;
       top: 10px;
       font-size: 16px;
       z-index: 10;
     }
-
     #info { left: 10px; }
     #highScore { right: 10px; }
+    #timer {
+      left: 50%;
+      transform: translateX(-50%);
+    }
 
     .health-bar {
       position: absolute;
@@ -64,10 +68,6 @@
       cursor: pointer;
     }
 
-    .pauseBtn:hover {
-      box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-    }
-
     .touch-controls {
       position: absolute;
       bottom: 80px;
@@ -77,13 +77,11 @@
       flex-direction: column;
       gap: 10px;
     }
-
     .row {
       display: flex;
       justify-content: center;
       gap: 10px;
     }
-
     .btn {
       width: 50px;
       height: 50px;
@@ -92,17 +90,8 @@
       text-align: center;
       line-height: 50px;
       font-size: 20px;
-      color: white;
+      color: white;                             
       user-select: none;
-    }
-
-    #shootTip {
-      position: absolute;
-      bottom: 60px;
-      right: 10px;
-      font-size: 12px;
-      color: #aaa;
-      z-index: 10;
     }
 
     #inventory {
@@ -128,63 +117,27 @@
       cursor: pointer;
     }
 
-      /* @media (max-width: 768px) {
-  #info,
-  #highScore {
-    font-size: 14px;
-    top: 5px;
-  }
-
-  .pauseBtn {
-    top: 10px;
-    font-size: 14px;
-    padding: 10px 16px;
-  }
-
-  .health-bar {
-    width: 70%;
-    left: 15%;
-    top: 45px;
-    height: 14px;
-  }
-
-  .touch-controls {
-    bottom: 90px;
-    left: 10px;
-    gap: 10px;
-    transform: scale(1.3);
-  }
-
-  .btn {
-    width: 60px;
-    height: 60px;
-    font-size: 26px;
-    line-height: 60px;
-  }
-
-  #shootTip {
-    font-size: 13px;
-    right: 10px;
-    bottom: 30px;
-  }
-
-  #inventory {
-    position: fixed;
-    bottom: 10px;
-    width: 90%;
-    left: 5%;
-    margin: 0 auto;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 10px;
-  }
-
-  .slot {
-    font-size: 14px;
-    min-width: 60px;
-    padding: 6px;
-  }
-} */
+    #restartBtn {
+      display: none;
+      position: fixed;
+      bottom: 90px;
+      right: 10px;
+      width: 120px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      border: 2px solid #00ffff;
+      border-radius: 10px;
+      background-color: rgba(0,0,0,0.9);
+      color: #00ffff;
+      cursor: pointer;
+      z-index: 101;
+      transition: all 0.3s ease;
+    }
+    #restartBtn:hover {
+      box-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+      transform: scale(1.05);
+    }
   </style>
 </head>
 <body>
@@ -193,7 +146,11 @@
 
   <div id="info">Health: <span id="health">100</span> | Score: <span id="score">0</span></div>
   <div id="highScore">High Score: <span id="high">0</span></div>
-  <div class="health-bar"><div class="health-fill" id="healthBarFill" style="width: 100%;"></div></div>
+  <div id="timer">Time Left: <span id="timeLeft">60</span>s</div>
+
+  <div class="health-bar">
+    <div class="health-fill" id="healthBarFill" style="width: 100%;"></div>
+  </div>
 
   <div class="touch-controls">
     <div class="row"><div class="btn" id="btn-up">▲</div></div>
@@ -203,7 +160,6 @@
       <div class="btn" id="btn-right">▶</div>
     </div>
   </div>
-  <div id="shootTip">Tap canvas to shoot</div>
 
   <div id="inventory">
     <div class="slot" id="slot0">🧰</div>
@@ -211,288 +167,317 @@
     <div class="slot" id="slot2">⚡</div>
   </div>
 
+  <button id="restartBtn" onclick="restartGame()">Restart</button>
+
   <audio id="shootSound" src="shoot.mp3"></audio>
   <audio id="hitSound" src="hit.mp3"></audio>
 
-  <script>
+<script>
+// © 2025 Gunjan Sunil kelshikar. All rights reserved.
+// Unauthorized reproduction or redistribution is strictly prohibited.
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    const backgroundImg = new Image(); backgroundImg.src = 'level8.jpg';
+    const backgroundImg = new Image(); backgroundImg.src = 'images/level8.jpg';
     const playerImg = new Image(); playerImg.src = 'player1.png';
     const enemyImg = new Image(); enemyImg.src = 'enemy1.png';
     const healthKitImg = new Image(); healthKitImg.src = 'health-kit.png';
     const shieldImg = new Image(); shieldImg.src = 'shield.png';
     const speedBoostImg = new Image(); speedBoostImg.src = 'speed.png';
 
-    let player = { x: 100, y: 100, size: 50, speed: 5, health: 100, shield: false };
-    let bullets = [], enemies = [], powerUps = [], score = 0;
-    let highScore = localStorage.getItem('highScore') || 0;
+    let player = { x:100,y:100,size:50,speed:5,health:100,shield:false };
+    let bullets=[], enemies=[], powerUps=[], score=0;
+    let highScore = localStorage.getItem('highScore')||0;
     document.getElementById('high').textContent = highScore;
 
     const keys = {};
-    const shootSound = document.getElementById('shootSound');
-    const hitSound = document.getElementById('hitSound');
+    const shootSound=document.getElementById('shootSound');
+    const hitSound=document.getElementById('hitSound');
 
-    let inventory = [null, null, null];
-    let isShieldCooldown = false;
-    let shieldCooldownTime = 0;
-    let shieldCooldownInterval;
+    let inventory=[null,null,null];
+    let isShieldCooldown=false, shieldCooldownTime=0, shieldCooldownInterval;
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      player.x = canvas.width / 2;
-      player.y = canvas.height / 2;
+    let timeLeft=60, timerInterval, gameEnded=false;
+
+    function resizeCanvas(){
+      canvas.width=window.innerWidth;
+      canvas.height=window.innerHeight;
+      player.x=canvas.width/2; player.y=canvas.height/2;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-    document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+    document.addEventListener('keydown', e=>keys[e.key.toLowerCase()]=true);
+    document.addEventListener('keyup', e=>keys[e.key.toLowerCase()]=false);
 
-    const moveMap = { 'btn-up': 'w', 'btn-down': 's', 'btn-left': 'a', 'btn-right': 'd' };
-    Object.keys(moveMap).forEach(id => {
-      const key = moveMap[id];
-      const btn = document.getElementById(id);
-      btn.addEventListener('touchstart', () => keys[key] = true);
-      btn.addEventListener('touchend', () => keys[key] = false);
+    const moveMap={'btn-up':'w','btn-down':'s','btn-left':'a','btn-right':'d'};
+    Object.keys(moveMap).forEach(id=>{
+      const key=moveMap[id];
+      const btn=document.getElementById(id);
+      btn.addEventListener('touchstart',()=>keys[key]=true);
+      btn.addEventListener('touchend',()=>keys[key]=false);
     });
+    canvas.addEventListener('click', e=>shoot(e.offsetX,e.offsetY));
 
-    canvas.addEventListener('touchstart', e => {
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      shoot(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-    }, { passive: false });
-
-    canvas.addEventListener('click', e => shoot(e.offsetX, e.offsetY));
-
-    function shoot(x, y) {
-      const angle = Math.atan2(y - player.y, x - player.x);
-      bullets.push({ x: player.x, y: player.y, dx: Math.cos(angle) * 6, dy: Math.sin(angle) * 6 });
+    function shoot(x,y){
+      const angle=Math.atan2(y-player.y, x-player.x);
+      bullets.push({x:player.x,y:player.y,dx:Math.cos(angle)*6,dy:Math.sin(angle)*6});
       shootSound.play();
     }
 
-    function updateInventoryUI() {
-  for (let i = 0; i < 3; i++) {
-    const slot = document.getElementById('slot' + i);
-    const item = inventory[i];
-    if (item) {
-      const symbol = ['🧰','🛡️','⚡'][i];
-      slot.textContent = `${symbol} x${item.count}`;
-    } else {
-      slot.textContent = ['🧰','🛡️','⚡'][i];
-    }
-  }
-}
-
-
-    function addItemToInventory(name) {
-      const index = { "Health Kit": 0, "Shield": 1, "Speed Boost": 2 }[name];
-      if (inventory[index]) inventory[index].count++;
-      else inventory[index] = { name, count: 1 };
-      updateInventoryUI();
-    }
-
-    function useItem(index) {
-      const item = inventory[index];
-      if (!item || item.count <= 0) return;
-
-      if (item.name === 'Health Kit') {
-        player.health = Math.min(100, player.health + 30);
-      } else if (item.name === 'Shield') {
-        if (isShieldCooldown) {
-          alert("Shield is cooling down!");
-          return;
-        }
-        player.shield = true;
-        setTimeout(() => {
-          player.shield = false;
-          isShieldCooldown = true;
-          shieldCooldownTime = 10;
-          const slot = document.getElementById('slot1');
-          slot.textContent = `⏳ ${shieldCooldownTime}s`;
-          shieldCooldownInterval = setInterval(() => {
-            shieldCooldownTime--;
-            if (shieldCooldownTime > 0) {
-              slot.textContent = `⏳ ${shieldCooldownTime}s`;
-            } else {
-              clearInterval(shieldCooldownInterval);
-              isShieldCooldown = false;
-              updateInventoryUI();
-            }
-          }, 1000);
-        }, 5000);
-      } else if (item.name === 'Speed Boost') {
-        player.speed += 3;
-        setTimeout(() => player.speed = 5, 5000);
+    function updateInventoryUI(){
+      for(let i=0;i<3;i++){
+        const slot=document.getElementById('slot'+i), item=inventory[i];
+        slot.textContent = item ? ['🧰','🛡️','⚡'][i]+' x'+item.count : ['🧰','🛡️','⚡'][i];
       }
+    }
 
-      item.count--;
-      if (item.count <= 0) inventory[index] = null;
+    function addItemToInventory(name){
+      const index={"Health Kit":0,"Shield":1,"Speed Boost":2}[name];
+      if(inventory[index]) inventory[index].count++;
+      else inventory[index]={name,count:1};
       updateInventoryUI();
     }
 
-    document.addEventListener('keydown', e => {
-      const key = e.key.toLowerCase();
-      if (key === 'h') useItem(0);
-      if (key === 'j') useItem(1);
-      if (key === 'k') useItem(2);
-    });
-
-    for (let i = 0; i < 3; i++) {
-      document.getElementById('slot' + i).addEventListener('click', () => useItem(i));
+    function useItem(i){
+      const item=inventory[i];
+      if(!item||item.count<=0) return;
+      if(item.name==='Health Kit') player.health=Math.min(100,player.health+30);
+      else if(item.name==='Shield'){
+        if(isShieldCooldown){alert("Shield cooling!");return;}
+        player.shield=true;
+        setTimeout(()=>{
+          player.shield=false; isShieldCooldown=true;
+          shieldCooldownTime=10; const slot=document.getElementById('slot1');
+          slot.textContent='⏳ '+shieldCooldownTime+'s';
+          shieldCooldownInterval=setInterval(()=>{
+            shieldCooldownTime--;
+            if(shieldCooldownTime>0) slot.textContent='⏳ '+shieldCooldownTime+'s';
+            else{clearInterval(shieldCooldownInterval);isShieldCooldown=false;updateInventoryUI();}
+          },1000);
+        },5000);
+      }
+      else if(item.name==='Speed Boost'){
+        player.speed+=3;
+        setTimeout(()=>player.speed=5,5000);
+      }
+      item.count--; if(item.count<=0) inventory[i]=null;
+      updateInventoryUI();
     }
+
+    document.addEventListener('keydown', e=>{
+      const k=e.key.toLowerCase();
+      if(k==='h') useItem(0);
+      if(k==='j') useItem(1);
+      if(k==='k') useItem(2);
+    });
+    for(let i=0;i<3;i++) document.getElementById('slot'+i).addEventListener('click', ()=>useItem(i));
 
     addItemToInventory("Shield");
     addItemToInventory("Health Kit");
-    addItemToInventory("Speed Boos");
+    addItemToInventory("Speed Boost");
 
-    function update() {
-      if (keys['w']) player.y -= player.speed;
-      if (keys['s']) player.y += player.speed;
-      if (keys['a']) player.x -= player.speed;
-      if (keys['d']) player.x += player.speed;
+    function update(){
+      if(keys['w']) player.y-=player.speed;
+      if(keys['s']) player.y+=player.speed;
+      if(keys['a']) player.x-=player.speed;
+      if(keys['d']) player.x+=player.speed;
 
-      player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
-      player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+      player.x=Math.max(player.size,Math.min(canvas.width-player.size,player.x));
+      player.y=Math.max(player.size,Math.min(canvas.height-player.size,player.y));
 
-      bullets.forEach(b => { b.x += b.dx; b.y += b.dy; });
-      bullets = bullets.filter(b => b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height);
+      bullets.forEach(b=>{b.x+=b.dx; b.y+=b.dy;});
+      bullets=bullets.filter(b=>b.x>0&&b.x<canvas.width&&b.y>0&&b.y<canvas.height);
 
-      if (Math.random() < 0.02) {
-        const side = Math.random() < 0.5 ? 0 : canvas.width;
-        enemies.push({ x: side, y: Math.random() * canvas.height, size: 20, speed: 1 + Math.random() });
+      if(Math.random()<0.02){
+        const side=Math.random()<0.5?0:canvas.width;
+        enemies.push({x:side,y:Math.random()*canvas.height,size:20,speed:1+Math.random()});
       }
-
-      enemies.forEach(e => {
-        const angle = Math.atan2(player.y - e.y, player.x - e.x);
-        e.x += Math.cos(angle) * e.speed;
-        e.y += Math.sin(angle) * e.speed;
+      enemies.forEach(e=>{
+        const angle=Math.atan2(player.y-e.y,player.x-e.x);
+        e.x+=Math.cos(angle)*e.speed; e.y+=Math.sin(angle)*e.speed;
       });
 
-      bullets.forEach((b, bi) => {
-        enemies.forEach((e, ei) => {
-          if (Math.hypot(b.x - e.x, b.y - e.y) < e.size) {
-            bullets.splice(bi, 1);
-            enemies.splice(ei, 1);
-            hitSound.play();
-            score += 10;
+      bullets.forEach((b,bi)=>{
+        enemies.forEach((e,ei)=>{
+          if(Math.hypot(b.x-e.x,b.y-e.y)<e.size){
+            bullets.splice(bi,1); enemies.splice(ei,1);
+            hitSound.play(); score+=10;
           }
         });
       });
 
-      enemies.forEach((e, ei) => {
-        if (Math.hypot(player.x - e.x, player.y - e.y) < e.size) {
-          if (!player.shield) player.health -= 5;
-          enemies.splice(ei, 1);
+      enemies.forEach((e,ei)=>{
+        if(Math.hypot(player.x-e.x,player.y-e.y)<e.size){
+          if(!player.shield) player.health-=5;
+          enemies.splice(ei,1);
         }
       });
 
-      if (Math.random() < 0.005) {
-        const types = ['Health Kit', 'Shield', 'Speed Boost'];
-        const type = types[Math.floor(Math.random() * types.length)];
-        powerUps.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: 15, type });
+      if(Math.random()<0.005){
+        const types=['Health Kit','Shield','Speed Boost'];
+        const type=types[Math.floor(Math.random()*types.length)];
+        powerUps.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,size:15,type});
       }
-
-      powerUps.forEach((p, i) => {
-        if (Math.hypot(player.x - p.x, player.y - p.y) < player.size + p.size) {
-          addItemToInventory(p.type);
-          powerUps.splice(i, 1);
+      powerUps.forEach((p,i)=>{
+        if(Math.hypot(player.x-p.x,player.y-p.y)<player.size+p.size){
+          addItemToInventory(p.type); powerUps.splice(i,1);
         }
       });
 
-      document.getElementById('health').textContent = player.health;
-      document.getElementById('score').textContent = score;
-      document.getElementById('healthBarFill').style.width = player.health + '%';
+      document.getElementById('health').textContent=player.health;
+      document.getElementById('score').textContent=score;
+      document.getElementById('healthBarFill').style.width=player.health+'%';
     }
 
-    function draw() {
-      ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-      powerUps.forEach(p => {
-        let img;
-        if (p.type === 'Health Kit') img = healthKitImg;
-        else if (p.type === 'Shield') img = shieldImg;
-        else if (p.type === 'Speed Boost') img = speedBoostImg;
-        ctx.drawImage(img, p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
-      });
-
-      ctx.drawImage(playerImg, player.x - player.size, player.y - player.size, player.size * 2, player.size * 2);
-
-      if (player.shield) {
+    function draw(){
+      ctx.drawImage(backgroundImg,0,0,canvas.width,canvas.height);
+      ctx.drawImage(playerImg,player.x-player.size,player.y-player.size,player.size*2,player.size*2);
+      if(player.shield){
         ctx.beginPath();
-        ctx.arc(player.x, player.y, player.size + 10, 0, Math.PI * 2);
-        ctx.strokeStyle = '#00ffff';
-        ctx.lineWidth = 4;
+        ctx.arc(player.x,player.y,player.size+10,0,Math.PI*2);
+        ctx.strokeStyle='#00ffff'; ctx.lineWidth=4;
         ctx.stroke();
       }
-                               
-      ctx.fillStyle = 'yellow';
-      bullets.forEach((b, i) => {
-      const gradient = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, 5);
-        gradient.addColorStop(0, 'yellow');
-        gradient.addColorStop(0.5, 'orange');
-        gradient.addColorStop(1, 'red');
-        
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
+      bullets.forEach(b=>{
+        const grad=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,5);
+        grad.addColorStop(0,'yellow');
+        grad.addColorStop(0.5,'orange');
+        grad.addColorStop(1,'red');
+        ctx.fillStyle=grad;
+        ctx.beginPath(); ctx.arc(b.x,b.y,5,0,Math.PI*2);
         ctx.fill();
       });
-
-      enemies.forEach(e => {
-        ctx.drawImage(enemyImg, e.x - e.size, e.y - e.size, e.size * 2, e.size * 2);
+      enemies.forEach(e=>ctx.drawImage(enemyImg,e.x-e.size,e.y-e.size,e.size*2,e.size*2));
+      powerUps.forEach(p=>{
+        const img = p.type==='Health Kit'?healthKitImg:(p.type==='Shield'?shieldImg:speedBoostImg);
+        ctx.drawImage(img,p.x-p.size,p.y-p.size,p.size*2,p.size*2);
       });
     }
 
-    function loop() {
-      if (player.health <= 0) {
-        ctx.fillStyle = 'white';
-        ctx.font = '40px Arial';
-        ctx.fillText('Game Over!', canvas.width / 2 - 100, canvas.height / 2);
-        ctx.font = '20px Arial';
-        ctx.fillText('Refresh to restart', canvas.width / 2 - 80, canvas.height / 2 + 30);
+    function loop(){
+      if(gameEnded) return;
 
-        if (score > highScore) {
-          highScore = score;
-          localStorage.setItem('highScore', highScore);
-          document.getElementById('high').textContent = highScore;
-        }
+      if(score>=500 && timeLeft>0){
+        endGame("🏆 VICTORY! 500 Points in Time!", true);
         return;
       }
 
-      if (!isPaused) {
-        update();
-        draw();
+      if(player.health<=0){
+        endGame("💀 Game Over! Health Lost.", false);
+        return;
       }
 
+      if(!isPaused){ update(); draw(); }
       requestAnimationFrame(loop);
     }
 
-    let loadedImages = 0;
-    const totalImages = 6;
-    function checkAllLoaded() {
-      loadedImages++;
-      if (loadedImages === totalImages) {
+    function endGame(message, isWin = false) {
+  gameEnded = true;
+  clearInterval(timerInterval);
+
+  // Step 1: Dim the background
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Step 2: Draw the message on top
+  ctx.font = 'bold 48px Impact';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = isWin ? '#0ff' : '#ff4444';
+  ctx.shadowColor = isWin ? '#00ffff' : '#ff0000';
+  ctx.shadowBlur = 20;
+  ctx.fillText(message, canvas.width / 2, canvas.height / 2 - 50);
+
+  ctx.font = '24px Arial';
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('Tap Restart to play again', canvas.width / 2, canvas.height / 2 + 30);
+
+  // Step 3: Show and style the restart button
+  const btn = document.getElementById('restartBtn');
+  btn.style.display = 'block';
+  btn.style.zIndex = 102; // ensure it's on top of the canvas
+
+  // Step 4: Launch fireworks behind the message
+    if (isWin) triggerFireworks();
+  }
+
+    function triggerFireworks(){
+      const colors=['#ff0','#f0f','#0ff','#0f0','#f00','#00f'];
+      let particles=[];
+      function createFirework(){
+        const x=Math.random()*canvas.width, y=Math.random()*canvas.height/2;
+        for(let i=0;i<60;i++){
+          const angle=Math.random()*2*Math.PI;
+          const speed=Math.random()*4+2;
+          particles.push({x,y,dx:Math.cos(angle)*speed,dy:Math.sin(angle)*speed,radius:Math.random()*2+1,color:colors[Math.floor(Math.random()*colors.length)],life:60});
+        }
+      }
+      function drawFire(){
+        ctx.fillStyle='rgba(0,0,0,0.1)';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        particles.forEach((p,i)=>{
+          ctx.beginPath();
+          ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);
+          ctx.fillStyle=p.color;
+          ctx.fill();
+          p.x+=p.dx;
+          p.y+=p.dy;
+          p.dy+=0.05;
+          p.life--;
+          if(p.life<=0) particles.splice(i,1);
+        });
+        if(Math.random()<0.1) createFirework();
+        if(gameEnded) requestAnimationFrame(drawFire);
+      }
+      drawFire();
+    }
+
+    function startTimer(){
+      timerInterval=setInterval(()=>{
+        timeLeft--;
+        document.getElementById('timeLeft').textContent=timeLeft;
+        if(timeLeft<=0 && score<500 && !gameEnded){
+          endGame("⏰ Time's Up! You didn’t reach 500 points.", false);
+        }
+      },1000);
+    }
+
+    function restartGame(){
+      location.reload();
+    }
+
+    let loaded=0;
+    const totalImgs=6;
+    function checkAllLoaded(){
+      loaded++;
+      if(loaded===totalImgs){
         resizeCanvas();
         updateInventoryUI();
         loop();
+        startTimer();
       }
     }
 
-    playerImg.onload = checkAllLoaded;
-    enemyImg.onload = checkAllLoaded;
-    backgroundImg.onload = checkAllLoaded;
-    healthKitImg.onload = checkAllLoaded;
-    shieldImg.onload = checkAllLoaded;
-    speedBoostImg.onload = checkAllLoaded;
+    playerImg.onload=checkAllLoaded;
+    enemyImg.onload=checkAllLoaded;
+    backgroundImg.onload=checkAllLoaded;
+    healthKitImg.onload=checkAllLoaded;
+    shieldImg.onload=checkAllLoaded;
+    speedBoostImg.onload=checkAllLoaded;
 
-    let isPaused = false;
-    const pauseBtn = document.getElementById('pauseBtn');
-    pauseBtn.addEventListener('click', () => {
-      isPaused = !isPaused;
-      pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
-    });
-  </script>
+    let isPaused=false;
+    const pauseBtn=document.getElementById('pauseBtn');
+    pauseBtn.addEventListener('click',()=>{
+      isPaused=!isPaused;
+      pauseBtn.textContent=isPaused?'Resume':'Pause';
+
+     if (isPaused) {
+      clearInterval(timerInterval); // Stop the timer when paused
+    } else {
+    startTimer(); // Resume the timer
+    }
+     });
+</script>
 </body>
 </html>
